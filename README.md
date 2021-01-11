@@ -4,6 +4,12 @@ Using a nodejs backend, and a mongo db in the cloud
 
 Running on: https://mevn-task-app.herokuapp.com/
 
+Backend code on: https://github.com/evinracher/mevn-backend
+
+Screenshots:
+
+![App screenshot](https://raw.githubusercontent.com/evinracher/mevn-frontend/main/details/2021_mevn.png)
+
 ## Project setup
 
 ```
