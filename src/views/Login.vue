@@ -39,6 +39,7 @@ export default {
         .then((res) => {
           this.message = "";
           this.setToken(res.data.token);
+          this.$router.push({ name: "Notes" });
         })
         .catch(({ response }) => {
           console.error(response);

@@ -1,5 +1,5 @@
 <template>
-  <div class="container pt-4">
+  <div class="container">
     <b-alert
       :show="dismissCountDown"
       dismissible
@@ -9,7 +9,7 @@
     >
       {{ message.text }}
     </b-alert>
-    <form @submit.prevent="editNote" v-if="editing">
+    <form @submit.prevent="updateNote" v-if="editing">
       <h4>Edit note</h4>
       <input
         v-model="note.name"
@@ -72,104 +72,46 @@
         </tr>
       </tbody>
     </table>
+    <Paginator />
   </div>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapActions, mapGetters, mapState } from "vuex";
+import Paginator from "../../components/Paginator.vue";
 export default {
+  components: { Paginator },
   data() {
     return {
-      notes: [],
       note: { name: "", description: "" },
-      message: { color: "success", text: "" },
       dismissSecs: 5,
       dismissCountDown: 0,
       editing: false,
     };
   },
   computed: {
-    ...mapState(["token"]),
-  },
-  created() {
-    this.listNotes();
+    ...mapState(["token", "notes", "message"]),
+    ...mapGetters(["config"]),
   },
   methods: {
-    listNotes() {
-      let config = {
-        headers: {
-          token: this.token,
-        },
-      };
-      // using VueAxios
-      this.axios
-        .get("/notes", config)
-        .then((res) => {
-          this.notes = res.data;
-        })
-        .catch(({ response }) => console.error(response));
-    },
+    ...mapActions(["addNoteAction", "deleteNoteAction", "updateNoteAction"]),
     addNote() {
-      let config = {
-        headers: {
-          token: this.token,
-        },
-      };
-      this.axios
-        .post("/notes", this.note, config)
-        .then((res) => {
-          this.notes.push(res.data);
-          this.note = { name: "", description: "" };
-          this.message.text = "Note added";
-          this.message.color = "success";
-          this.showAlert();
-        })
-        .catch(({ response }) => {
-          if (response.data.error.errors.name.message) {
-            this.message.text = response.data.error.errors.name.message;
-          } else {
-            this.message.text = "Error system";
-          }
-          this.message.color = "danger";
-          this.showAlert();
-          console.error(response);
-        });
+      this.showAlert();
+      this.addNoteAction(this.note);
+      if (this.message.type !== "error") {
+        this.note = { name: "", description: "" };
+      }
     },
     deleteNote(id) {
-      let config = {
-        headers: {
-          token: this.token,
-        },
-      };
-      this.axios
-        .delete("/notes/" + id, config)
-        .then((res) => {
-          this.notes = this.notes.filter((item) => item._id != id);
-          this.note = { name: "", description: "" };
-          this.message.text = "Note deleted";
-          this.message.color = "warning";
-          this.showAlert();
-        })
-        .catch(({ response }) => {
-          if (response.data.error?.errors.name.message) {
-            this.message.text = response.data.error.errors.name.message;
-          } else {
-            this.message.text = "Error system";
-          }
-          this.message.color = "danger";
-          this.showAlert();
-          console.error(response);
-        });
+      this.deleteNoteAction(id);
+      this.showAlert();
+      this.note = { name: "", description: "" };
+      this.editing = false;
     },
     activeEditForm(id) {
       this.editing = true;
-      let config = {
-        headers: {
-          token: this.token,
-        },
-      };
       this.axios
-        .get("/notes/" + id, config)
+        .get("/notes/" + id, this.config)
         .then((res) => {
           this.note = res.data;
         })
@@ -179,35 +121,12 @@ export default {
       this.editing = false;
       this.note = { name: "", description: "" };
     },
-    editNote() {
-      let config = {
-        headers: {
-          token: this.token,
-        },
-      };
-      const note = this.note;
-      this.axios
-        .put("/notes/" + note._id, note, config)
-        .then((res) => {
-          this.notes = this.notes.map((item) =>
-            item._id === note._id ? note : item
-          );
-          this.note = { name: "", description: "" };
-          this.editing = false;
-          this.message.text = "Note edited";
-          this.message.color = "success";
-          this.showAlert();
-        })
-        .catch(({ response }) => {
-          if (response.data.error.errors.name.message) {
-            this.message.text = response.data.error.errors.name.message;
-          } else {
-            this.message.text = "Error system";
-          }
-          this.message.color = "danger";
-          this.showAlert();
-          console.error(response);
-        });
+    updateNote() {
+      this.updateNoteAction(this.note);
+      if (this.message.type !== "error") {
+        this.note = { name: "", description: "" };
+        this.editing = false;
+      }
     },
     countDownChanged(dismissCountDown) {
       this.dismissCountDown = dismissCountDown;
@@ -218,6 +137,3 @@ export default {
   },
 };
 </script>
-
-<style>
-</style>
